@@ -28,3 +28,5 @@
 git clone https://github.com/yourusername/mpc.git
 cd mpc
 go mod tidy
+go run ./cmd/mpc status --hosts hosts.yml
+go run ./cmd/mpc status --instances hosts.yml
