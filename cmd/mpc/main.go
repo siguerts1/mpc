@@ -1,27 +1,37 @@
 package main
 
 import (
-	"encoding/json"
 	"flag"
 	"fmt"
 	"log"
+	"net/http"
+	"os"
 
 	"github.com/siguerts1/mpc/internal/controller"
 )
 
 func main() {
-	hostsFile := flag.String("hosts", "hosts.yml", "Path to hosts.yml")
-	flag.Parse()
-
-	results, err := controller.CollectHostData(*hostsFile)
-	if err != nil {
-		log.Fatalf("❌ Failed to collect data: %v", err)
+	if len(os.Args) < 2 {
+		fmt.Println("Usage: mpc [serve] --hosts hosts.yml")
+		return
 	}
 
-	jsonOutput, err := json.MarshalIndent(results, "", "  ")
-	if err != nil {
-		log.Fatalf("❌ Failed to marshal JSON: %v", err)
-	}
+	cmd := os.Args[1]
+	args := os.Args[2:]
 
-	fmt.Println(string(jsonOutput))
+	switch cmd {
+	case "serve":
+		hostsFile := flag.NewFlagSet("serve", flag.ExitOnError)
+		hostsPath := hostsFile.String("hosts", "hosts.yml", "Path to hosts.yml")
+		hostsFile.Parse(args)
+
+		controller.HostsPath = *hostsPath
+		http.HandleFunc("/api/instances", controller.ServeInstances)
+
+		fmt.Println("🚀 Serving MPC API at http://localhost:9900")
+		log.Fatal(http.ListenAndServe(":9900", nil))
+
+	default:
+		fmt.Println("Unknown command:", cmd)
+	}
 }
